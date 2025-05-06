@@ -27,6 +27,7 @@ nano /root/.bashrc
 screen -S aztec
 
 6. Запускаем ноду
+aztec-up alpha-testnet
 aztec start --node --archiver --sequencer   --network alpha-testnet   --l1-rpc-urls <URL>   --l1-consensus-host-urls "<URL2>"   --sequencer.validatorPrivateKey <0xYourPrivatKey>   --sequencer.coinbase <0xYourAddress>   --p2p.p2pIp <IP>   --p2p.maxTxPoolSize 1000000000
 
 7. Проверка блока
