@@ -1,0 +1,42 @@
+1. Обновлям сервер
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl git jq lz4 build-essential unzip make gcc ncdu cmake clang pkg-config libssl-dev libzmq3-dev libczmq-dev python3-pip protobuf-compiler dos2unix screen
+
+2. Устанавливаем докер и докер компоуз:
+sudo apt install -y ca-certificates curl gnupg lsb-release 
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update && sudo apt install -y docker-ce docker-ce-cli containerd.io
+sudo usermod -aG docker $USER
+newgrp docker
+
+3. докер компоуз
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+4. bash -i <(curl -s https://install.aztec.network)
+#отвечаем у
+source .bash_profile 
+
+или 
+nano /root/.bashrc
+Добавить в конец: export PATH="/root/.aztec/bin:$PATH"
+Применить изменения: source /root/.bashrc
+
+5. Запускаем скрин
+screen -S aztec
+
+6. Запускаем ноду
+aztec start --node --archiver --sequencer   --network alpha-testnet   --l1-rpc-urls <URL>   --l1-consensus-host-urls "<URL2>"   --sequencer.validatorPrivateKey <0xYourPrivatKey>   --sequencer.coinbase <0xYourAddress>   --p2p.p2pIp <IP>   --p2p.maxTxPoolSize 1000000000
+
+7. Проверка блока
+curl -s -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"node_getL2Tips","params":[],"id":67}' http://localhost:8080 | jq -r ".result.proven.number"
+
+8. Регистрация ноды
+aztec add-l1-validator \
+  --l1-rpc-urls https://eth-sepolia.g.example.com/example/your-key \
+  --private-key <your-private-key> \
+  --attester <your-validator-address> \
+  --proposer-eoa <your-validator-address> \
+  --staking-asset-handler 0xF739D03e98e23A7B65940848aBA8921fF3bAc4b2 \
+  --l1-chain-id 11155111
