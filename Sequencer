@@ -1,3 +1,193 @@
+Быстрые команды
+Изменить конфиг и перезапустить
+nano aztec-nodes/docker-compose.yml
+sudo docker-compose down && sudo docker-compose up -d
+
+Логи
+docker logs aztec-nodes-sequencer-node-1 --tail 100
+docker logs -f aztec-nodes-sequencer-node-1 
+
+Проверка блока
+curl -s -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"node_getL2Tips","params":[],"id":67}' http://localhost:8080 | jq -r ".result.proven.number"
+
+Peer ID ноды
+sudo docker logs aztec-nodes-sequencer-node-1 2>&1 | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4 | head -n 1
+
+
+
+
+1. Обновляем сервер
+sudo apt update && sudo apt upgrade -y
+
+2. Устанавливаем Docker
+sudo apt update -y && sudo apt upgrade -y
+for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do sudo apt-get remove $pkg; done
+
+sudo apt-get update
+sudo apt-get install ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/nullY
+
+sudo apt update -y && sudo apt upgrade -y
+
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Test Docker
+sudo docker run hello-world
+
+3. Устанавливаем Node.js and npm
+sudo apt install -y nodejs npm
+node -v
+npm -v
+
+4. Ставим docker-compose
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+5. Start and enable docker
+sudo systemctl start docker
+sudo systemctl enable docker
+
+6. Install AZTEC CLI
+bash -i <(curl -s https://install.aztec.network)
+
+7. Open Bash profile
+nano /root/.bash_profile
+
+export PATH=$PATH:/root/.aztec/bin
+
+8. Refresh bash profile
+source /root/.bash_profile
+
+9. Update for testnet
+aztec-up alpha-testnet
+
+10. Check AZTEC version
+aztec --version
+
+11. Create sequencer prover and broker directory
+mkdir -p ~/aztec-data/{sequencer,prover,broker}
+
+12. Create Aztec directory
+mkdir ~/aztec-nodes
+cd ~/aztec-nodes
+
+13. Create docker-compose.yml
+nano docker-compose.yml
+
+14. Приватник - 2 строчки, пабкей - 1 строчка,рпц - 5 строчек
+
+version: "3.8"
+services:
+  # Full Node + Sequencer by TRTtheSalad
+  sequencer-node:
+    image: aztecprotocol/aztec:0.85.0-alpha-testnet.5
+    ports:
+    - "8080:8080"
+    - "40400:40400/tcp"
+    - "40400:40400/udp"
+    environment:
+#      ETHEREUM_HOSTS: "https://eth-sepolia.g.alchemy.com/v2/"
+#      L1_CONSENSUS_HOST_URLS: "https://lb.drpc.org/ogrpc?network=sepolia&dkey="
+      ETHEREUM_HOSTS: "https://ethereum-sepolia-rpc.publicnode.com"
+      L1_CONSENSUS_HOST_URLS: "https://ethereum-sepolia-beacon-api.publicnode.com"
+      VALIDATOR_PRIVATE_KEY: "0x"
+      P2P_IP: "157.180.74.152"
+      DATA_DIRECTORY: /data/sequencer
+      LOG_LEVEL: debug
+    entrypoint: >
+      sh -c 'node --no-warnings /usr/src/yarn-project/aztec/dest/bin/index.js start --network alpha-testnet --node --archiver --sequencer'
+    volumes:
+      - ~/aztec-data/sequencer:/data/sequencer
+
+  # Prover Node
+  prover-node:
+    image: aztecprotocol/aztec:0.85.0-alpha-testnet.5
+    command:
+      - node
+      - --no-warnings
+      - /usr/src/yarn-project/aztec/dest/bin/index.js
+      - start
+      - --prover-node
+      - --archiver
+      - --network
+      - alpha-testnet
+    depends_on:
+      - prover-broker
+    environment:
+#      ETHEREUM_HOSTS: "https://eth-sepolia.g.alchemy.com/v2/"
+#      L1_CONSENSUS_HOST_URL: "https://lb.drpc.org/ogrpc?network=sepolia&dkey="
+      ETHEREUM_HOSTS: "https://ethereum-sepolia-rpc.publicnode.com"
+      L1_CONSENSUS_HOST_URL: "https://ethereum-sepolia-beacon-api.publicnode.com"
+      PROVER_BROKER_HOST: http://prover-broker:8080
+      PROVER_PUBLISHER_PRIVATE_KEY: "0x"
+      DATA_DIRECTORY: /data/prover
+      LOG_LEVEL: info
+    volumes:
+      - ~/aztec-data/prover:/data/prover
+
+  # Prover Broker
+  prover-broker:
+    image: aztecprotocol/aztec:0.85.0-alpha-testnet.5
+    command:
+      - node
+      - --no-warnings
+      - /usr/src/yarn-project/aztec/dest/bin/index.js
+      - start
+      - --prover-broker
+      - --network
+      - alpha-testnet
+    environment:
+#      ETHEREUM_HOSTS: "https://eth-sepolia.g.alchemy.com/v2/9-CNU4SifqZDEd_qjgHpIKZTC2AFc0v5"
+      ETHEREUM_HOSTS: "https://ethereum-sepolia-rpc.publicnode.com"
+      DATA_DIRECTORY: /data/broker
+      LOG_LEVEL: info
+    volumes:
+      - ~/aztec-data/broker:/data/broker
+
+  # Prover Agent
+  prover-agent:
+    image: aztecprotocol/aztec:0.85.0-alpha-testnet.5
+    command:
+      - node
+      - --no-warnings
+      - /usr/src/yarn-project/aztec/dest/bin/index.js
+      - start
+      - --prover-agent
+      - --network
+      - alpha-testnet
+    environment:
+      PROVER_BROKER_HOST: http://prover-broker:8080
+      PROVER_ID: "0x"
+      PROVER_AGENT_COUNT: "1"
+      LOG_LEVEL: info
+
+15. Запустить ноды
+docker-compose up -d
+
+16. Register Sequencer as a validator
+aztec add-l1-validator \
+  --l1-rpc-urls https://ethereum-sepolia-rpc.publicnode.com\
+  --private-key <PRIVATE_KEY> \
+  --attester <WALLET_ADDRESS> \
+  --proposer-eoa <WALLET_ADDRESS> \
+  --staking-asset-handler 0xF739D03e98e23A7B65940848aBA8921fF3bAc4b2 \
+  --l1-chain-id 11155111
+
+
+
+
+
+
+
+================================================================================================
+old
 1. Обновлям сервер
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y curl git jq lz4 build-essential unzip make gcc ncdu cmake clang pkg-config libssl-dev libzmq3-dev libczmq-dev python3-pip protobuf-compiler dos2unix screen
