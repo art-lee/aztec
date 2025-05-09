@@ -81,7 +81,7 @@ cd ~/aztec-nodes
 13. Create docker-compose.yml
 nano docker-compose.yml
 
-14. Приватник - 2 строчки, пабкей - 1 строчка,рпц - 5 строчек
+14. Приватник - 2 строчки, пабкей - 1 строчка,рпц - 5 строчек, ip - 1 строчка
 
 version: "3.8"
 services:
@@ -144,7 +144,7 @@ services:
       - --network
       - alpha-testnet
     environment:
-#      ETHEREUM_HOSTS: "https://eth-sepolia.g.alchemy.com/v2/9-CNU4SifqZDEd_qjgHpIKZTC2AFc0v5"
+#      ETHEREUM_HOSTS: "https://eth-sepolia.g.alchemy.com/v2/"
       ETHEREUM_HOSTS: "https://ethereum-sepolia-rpc.publicnode.com"
       DATA_DIRECTORY: /data/broker
       LOG_LEVEL: info
