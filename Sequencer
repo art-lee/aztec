@@ -6,6 +6,7 @@ sudo docker-compose down && sudo docker-compose up -d
 Логи
 docker logs aztec-nodes-sequencer-node-1 --tail 100
 docker logs -f aztec-nodes-sequencer-node-1 
+docker logs aztec-nodes-sequencer-node-1 --tail 100 2>&1 | grep -Ei "error|warn|critical|fail|fatal"
 
 Проверка блока
 curl -s -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"node_getL2Tips","params":[],"id":67}' http://localhost:8080 | jq -r ".result.proven.number"
