@@ -16,12 +16,9 @@ sudo docker logs aztec-nodes-sequencer-node-1 2>&1 | grep -o '"peerId":"[^"]*"' 
 
 
 
-1. Обновляем сервер
-sudo apt update && sudo apt upgrade -y
-
 2. Устанавливаем Docker
 sudo apt update -y && sudo apt upgrade -y
-for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do sudo apt-get remove $pkg; done
+#for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do sudo apt-get remove $pkg; done
 
 sudo apt-get update
 sudo apt-get install ca-certificates curl gnupg
