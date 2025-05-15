@@ -111,7 +111,7 @@ Description=Aztec Node Monitor
 
 [Service]
 Type=simple
-ExecStart=/opt/aztec_monitor/your_script.sh
+ExecStart=/opt/aztec_monitor/aztec_monitor.sh
 ```
 
 **Создайте таймер для ежеминутного запуска:**
@@ -162,7 +162,6 @@ sudo systemctl start aztec-monitor.timer
 | Остановить               | `sudo systemctl stop aztec-monitor`  |
 | Перезапустить            | `sudo systemctl restart aztec-monitor` |
 | Отключить автозагрузку   | `sudo systemctl disable aztec-monitor` |
-| журнал работы сервиса    | `journalctl -f -u aztec-monitor.service
 ---
 
 ### **7. Удаление**
