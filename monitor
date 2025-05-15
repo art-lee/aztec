@@ -1,0 +1,186 @@
+**Полная инструкция по настройке скрипта мониторинга Aztec Node**
+
+---
+
+### **1. Создание рабочей папки**
+Выполните команды:
+```
+sudo mkdir -p /opt/aztec_monitor
+sudo chown $USER:$USER /opt/aztec_monitor
+cd /opt/aztec_monitor
+```
+
+---
+
+### **2. Создание скрипта мониторинга**
+Создайте файл `aztec_monitor.sh`:
+```
+nano /opt/aztec_monitor/aztec_monitor.sh
+```
+
+**Вставьте содержимое скрипта:**
+```
+#!/bin/bash
+
+WORKDIR="/opt/aztec_monitor"
+LAST_BLOCK_FILE="$WORKDIR/last_block.txt"
+LOG_FILE="$WORKDIR/monitor.log"
+
+# Функция отправки сообщения в Telegram
+send_alert() {
+    local message="$1"
+    curl -s -X POST "https://api.telegram.org/bot<token>" \
+        -d "chat_id=<chat_id>" \
+        -d "text=$message"
+    echo "$(date +'%Y-%m-%d %H:%M:%S') | Alert: $message" >> "$LOG_FILE"
+}
+
+# Получение данных
+result1=$(curl -s -X POST -H 'Content-Type: application/json' \
+    -d '{"jsonrpc":"2.0","method":"node_getL2Tips","params":[],"id":1}' \
+    http://localhost:8080 | jq -r ".result.proven.number")
+
+result2=$(curl -s -X POST -H 'Content-Type: application/json' \
+    -d '{"jsonrpc":"2.0","method":"node_getL2Tips","params":[],"id":1}' \
+    http://localhost:8080 | jq ".")
+
+# Проверка условий
+send_alert=false
+reason=""
+
+# Условие 1: Нет ответа result1
+if [[ -z "$result1" || "$result1" == "null" ]]; then
+    send_alert=true
+    reason="❌ Нет ответа result1 (Блок ноды)"
+fi
+
+# Условие 2: Нет ответа result2
+if [[ -z "$result2" || "$result2" == "null" ]]; then
+    send_alert=true
+    reason="❌ Нет ответа result2 (полный JSON)"
+fi
+
+# Условие 3: Разница между result1 и proven > 200
+if [[ "$send_alert" == false ]]; then
+    proven=$(echo "$result2" | jq -r ".result.proven.number")
+    if [[ "$result1" =~ ^[0-9]+$ && "$proven" =~ ^[0-9]+$ ]]; then
+        difference=$((result1 - proven))
+        abs_diff=${difference#-}
+        if ((abs_diff > 200)); then
+            send_alert=true
+            reason="⚠️ Разница между Блок ноды ($result1) и proven ($proven): $abs_diff"
+        fi
+    fi
+fi
+
+# Отправка уведомления
+if [[ "$send_alert" == true ]]; then
+    latest=$(echo "$result2" | jq -r ".result.latest.number")
+    finalized=$(echo "$result2" | jq -r ".result.finalized.number")
+    message="Aztec 2
+Блок ноды: ${result1:-N/A}
+Последний блок: ${latest:-N/A}
+Доказанный блок: ${proven:-N/A}
+Финализированный: ${finalized:-N/A}"
+    send_alert "$reason\n$message"
+fi
+
+# Сохранение текущего блока
+echo "$result1" > "$LAST_BLOCK_FILE"
+echo "$(date +'%Y-%m-%d %H:%M:%S') | Checked: result1=$result1" >> "$LOG_FILE"
+```
+
+**Сделайте скрипт исполняемым:**
+```
+chmod +x /opt/aztec_monitor/aztec_monitor.sh
+```
+
+---
+
+### **3. Настройка systemd для автоматического запуска**
+
+**Создайте сервисный файл:**
+```
+sudo nano /etc/systemd/system/aztec-monitor.service
+```
+
+**Вставьте содержимое:**
+```
+[Unit]
+Description=Aztec Node Monitor
+
+[Service]
+Type=simple
+ExecStart=/opt/aztec_monitor/your_script.sh
+```
+
+**Создайте таймер для ежеминутного запуска:**
+```
+sudo nano /etc/systemd/system/aztec-monitor.timer
+```
+
+**Вставьте содержимое:**
+```
+[Unit]
+Description=Run Aztec Node Monitor every minute
+
+[Timer]
+OnBootSec=10s
+OnUnitActiveSec=1min
+Unit=aztec-monitor.service
+
+[Install]
+WantedBy=timers.target
+```
+
+---
+
+### **4. Запуск и настройка автозагрузки**
+```
+sudo systemctl daemon-reload
+sudo systemctl enable aztec-monitor.service aztec-monitor.timer
+sudo systemctl start aztec-monitor.timer
+```
+
+---
+
+### **5. Проверка работы**
+- **Просмотр статуса:**
+  ```
+  systemctl status aztec-monitor.service
+  ```
+- **Логи:**
+  ```
+  tail -f /opt/aztec_monitor/monitor.log
+  ```
+
+---
+
+### **6. Управление сервисом**
+| Действие                 | Команда                              |
+|--------------------------|--------------------------------------|
+| Остановить               | `sudo systemctl stop aztec-monitor`  |
+| Перезапустить            | `sudo systemctl restart aztec-monitor` |
+| Отключить автозагрузку   | `sudo systemctl disable aztec-monitor` |
+| журнал работы сервиса    | `journalctl -f -u aztec-monitor.service
+---
+
+### **7. Удаление**
+```
+sudo systemctl stop aztec-monitor
+sudo systemctl disable aztec-monitor
+sudo rm /etc/systemd/system/aztec-monitor.*
+sudo rm -rf /opt/aztec_monitor
+sudo systemctl daemon-reload
+```
+
+---
+
+**Готово!** Скрипт будет:
+- Запускаться каждую минуту,
+- Сохранять данные в `/opt/aztec_monitor`,
+- Отправлять уведомления в Telegram при:
+  - Отсутствии ответа от ноды,
+  - Разнице между `result1` и `proven` > 200.
+
+Sources
