@@ -22,72 +22,32 @@ nano /opt/aztec_monitor/aztec_monitor.sh
 ```
 #!/bin/bash
 
+# Рабочая директория (на случай, если понадобится для других целей)
 WORKDIR="/opt/aztec_monitor"
-LAST_BLOCK_FILE="$WORKDIR/last_block.txt"
-LOG_FILE="$WORKDIR/monitor.log"
+
+# Имя ноды для идентификации в сообщениях
+NODE_NAME="Aztec 2"
 
 # Функция отправки сообщения в Telegram
 send_alert() {
     local message="$1"
+    # Отправка POST-запроса в Telegram Bot API
     curl -s -X POST "https://api.telegram.org/bot<token>" \
         -d "chat_id=<chat_id>" \
         -d "text=$message"
-    echo "$(date +'%Y-%m-%d %H:%M:%S') | Alert: $message" >> "$LOG_FILE"
 }
 
-# Получение данных
-result1=$(curl -s -X POST -H 'Content-Type: application/json' \
+# Делаем запрос к локальной ноде Aztec через JSON-RPC
+response=$(curl -s -X POST -H 'Content-Type: application/json' \
     -d '{"jsonrpc":"2.0","method":"node_getL2Tips","params":[],"id":1}' \
-    http://localhost:8080 | jq -r ".result.proven.number")
+    http://localhost:8080)
 
-result2=$(curl -s -X POST -H 'Content-Type: application/json' \
-    -d '{"jsonrpc":"2.0","method":"node_getL2Tips","params":[],"id":1}' \
-    http://localhost:8080 | jq ".")
-
-# Проверка условий
-send_alert=false
-reason=""
-
-# Условие 1: Нет ответа result1
-if [[ -z "$result1" || "$result1" == "null" ]]; then
-    send_alert=true
-    reason="❌ Нет ответа result1 (Блок ноды)"
+# Если ответ пустой или "null", отправляем уведомление в Telegram и завершаем скрипт
+if [[ -z "$response" || "$response" == "null" ]]; then
+    send_alert "❌ Нет ответа от ноды ($NODE_NAME)"
+    exit 1
 fi
 
-# Условие 2: Нет ответа result2
-if [[ -z "$result2" || "$result2" == "null" ]]; then
-    send_alert=true
-    reason="❌ Нет ответа result2 (полный JSON)"
-fi
-
-# Условие 3: Разница между result1 и proven > 200
-if [[ "$send_alert" == false ]]; then
-    proven=$(echo "$result2" | jq -r ".result.proven.number")
-    if [[ "$result1" =~ ^[0-9]+$ && "$proven" =~ ^[0-9]+$ ]]; then
-        difference=$((result1 - proven))
-        abs_diff=${difference#-}
-        if ((abs_diff > 200)); then
-            send_alert=true
-            reason="⚠️ Разница между Блок ноды ($result1) и proven ($proven): $abs_diff"
-        fi
-    fi
-fi
-
-# Отправка уведомления
-if [[ "$send_alert" == true ]]; then
-    latest=$(echo "$result2" | jq -r ".result.latest.number")
-    finalized=$(echo "$result2" | jq -r ".result.finalized.number")
-    message="Aztec 2
-Блок ноды: ${result1:-N/A}
-Последний блок: ${latest:-N/A}
-Доказанный блок: ${proven:-N/A}
-Финализированный: ${finalized:-N/A}"
-    send_alert "$reason\n$message"
-fi
-
-# Сохранение текущего блока
-echo "$result1" > "$LAST_BLOCK_FILE"
-#echo "$(date +'%Y-%m-%d %H:%M:%S') | Checked: result1=$result1" >> "$LOG_FILE"
 ```
 
 **Сделайте скрипт исполняемым:**
