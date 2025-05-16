@@ -19,14 +19,14 @@ nano /opt/aztec_monitor/aztec_monitor.sh
 ```
 
 **Вставьте содержимое скрипта:**
-```
+```                                                               
 #!/bin/bash
 
 # Рабочая директория (на случай, если понадобится для других целей)
 WORKDIR="/opt/aztec_monitor"
 
 # Имя ноды для идентификации в сообщениях
-NODE_NAME="Aztec 2"
+NODE_NAME="Aztec 1"
 
 # Функция отправки сообщения в Telegram
 send_alert() {
@@ -44,7 +44,7 @@ response=$(curl -s -X POST -H 'Content-Type: application/json' \
 
 # Если ответ пустой или "null", отправляем уведомление в Telegram и завершаем скрипт
 if [[ -z "$response" || "$response" == "null" ]]; then
-    send_alert "❌ Нет ответа от ноды ($NODE_NAME)"
+    send_alert "❌ $NODE_NAME - Нет ответа от ноды"
     exit 1
 fi
 
