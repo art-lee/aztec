@@ -87,7 +87,7 @@ fi
 
 # Сохранение текущего блока
 echo "$result1" > "$LAST_BLOCK_FILE"
-echo "$(date +'%Y-%m-%d %H:%M:%S') | Checked: result1=$result1" >> "$LOG_FILE"
+#echo "$(date +'%Y-%m-%d %H:%M:%S') | Checked: result1=$result1" >> "$LOG_FILE"
 ```
 
 **Сделайте скрипт исполняемым:**
