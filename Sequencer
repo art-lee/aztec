@@ -9,6 +9,12 @@ docker logs aztec-nodes-sequencer-node-1 --tail 100
 docker logs -f aztec-nodes-sequencer-node-1 --tail 30
 docker logs aztec-nodes-sequencer-node-1 --tail 100 2>&1 | grep -Ei "error|warn|critical|fail|fatal"
 
+Логи cli
+docker logs $(docker ps -a --format '{{.Names}}' | grep '^aztec-start-')
+docker logs $(docker ps -a --format '{{.Names}}' | grep '^aztec-start-') --tail 100
+docker logs $(docker ps -a --format '{{.Names}}' | grep '^aztec-start-') 2>&1 | grep "текст_для_поиска"
+
+
 Проверка блока
 curl -s -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"node_getL2Tips","params":[],"id":67}' http://localhost:8080 | jq -r ".result.proven.number"
 
