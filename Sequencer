@@ -25,7 +25,7 @@ curl -s -X POST \
 
 Peer ID ноды
 sudo docker logs aztec-nodes-sequencer-node-1 2>&1 | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4 | head -n 1
-sudo docker logs $(docker ps -a --format '{{.Names}}' | grep '^aztec-start-') 2>&1 | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4 | head -n 1
+sudo docker logs $(docker ps -a --format '{{.Names}}' | grep '^aztec_sequencer') 2>&1 | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4 | head -n 1
 
 
 
