@@ -111,6 +111,9 @@ services:
 
       # Добавленные параметры
       COINBASE: "pub_key"  # Для стейкинга/наград
+      P2P_MIN_PEERS: "96"       # Минимум соединений
+      P2P_MAX_PEERS: "122"       # Максимум соединений
+#      RPC_MAX_BLOCK_COUNT: "100" # Лимит блоков в RPC
 
     entrypoint: >
       sh -c 'node --no-warnings /usr/src/yarn-project/aztec/dest/bin/index.js start 
