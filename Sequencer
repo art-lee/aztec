@@ -107,7 +107,7 @@ services:
       VALIDATOR_PRIVATE_KEY: "privat_key"
       P2P_IP: "your_ip"
       DATA_DIRECTORY: /data/sequencer
-      LOG_LEVEL: debug
+      LOG_LEVEL: info
 
       # Добавленные параметры
       COINBASE: "pub_key"  # Для стейкинга/наград
