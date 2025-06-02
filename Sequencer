@@ -10,10 +10,8 @@ docker logs -f aztec-nodes-sequencer-node-1 --tail 30
 docker logs aztec-nodes-sequencer-node-1 --tail 100 2>&1 | grep -Ei "error|warn|critical|fail|fatal"
 
 Логи cli
-docker logs -f $(docker ps -a --format '{{.Names}}' | grep '^aztec-start-') --tail 30
-docker logs $(docker ps -a --format '{{.Names}}' | grep '^aztec-start-') --tail 100
-docker logs $(docker ps -a --format '{{.Names}}' | grep '^aztec-start-') 2>&1 | grep "текст_для_поиска"
-
+docker logs -f $(docker ps -a --format '{{.Names}}' | grep '^aztec') --tail 30
+docker logs $(docker ps -a --format '{{.Names}}' | grep '^aztec') --tail 100
 
 Проверка блока
 curl -s -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"node_getL2Tips","params":[],"id":67}' http://localhost:8080 | jq -r ".result.proven.number"
@@ -22,9 +20,7 @@ curl -s -X POST \
   -d '{"jsonrpc":"2.0","method":"node_getL2Tips","params":[],"id":67}' \
   http://localhost:8080 | jq
 
-
 Peer ID ноды
-sudo docker logs aztec-nodes-sequencer-node-1 2>&1 | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4 | head -n 1
 sudo docker logs $(docker ps -a --format '{{.Names}}' | grep '^aztec_sequencer') 2>&1 | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4 | head -n 1
 
 
