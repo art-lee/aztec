@@ -92,10 +92,9 @@ nano docker-compose.yml
 14. rpc1 / rpc2 / privat_key / pub_key / your_ip
 (Приватник - 2 строчки, пабкей - 1 строчка,рпц - 5 строчек, ip - 1 строчка)
 
-version: "3.8"
 services:
   sequencer-node:
-    image: aztecprotocol/aztec:0.87.2
+    image: aztecprotocol/aztec:0.87.8
     container_name: aztec_sequencer
     restart: unless-stopped  # Автоперезапуск при падении
     network_mode: host  # Обязательно для P2P коммуникации
@@ -105,14 +104,14 @@ services:
       - "40400:40400/udp"
     environment:
       ETHEREUM_HOSTS: "rpc1"
-      L1_CONSENSUS_HOST_URLS: "prc2"
-      VALIDATOR_PRIVATE_KEY: "privat_key"
-      P2P_IP: "your_ip"
+      L1_CONSENSUS_HOST_URLS: "baecon1"
+      VALIDATOR_PRIVATE_KEY: "privat"
+      P2P_IP: "ip"
       DATA_DIRECTORY: /data/sequencer
       LOG_LEVEL: info
 
       # Добавленные параметры
-      COINBASE: "pub_key"  # Для стейкинга/наград
+      COINBASE: "pubkey"  # Для стейкинга/наград
       P2P_MIN_PEERS: "96"       # Минимум соединений
       P2P_MAX_PEERS: "122"       # Максимум соединений
 #      RPC_MAX_BLOCK_COUNT: "100" # Лимит блоков в RPC
@@ -127,71 +126,10 @@ services:
       --l1-rpc-urls $${ETHEREUM_HOSTS}
       --l1-consensus-host-urls $${L1_CONSENSUS_HOST_URLS}
       --p2p.p2pIp $${P2P_IP}'
-    
+
     volumes:
       - ~/aztec-data/sequencer:/data/sequencer
 
-  # Prover Node
-  prover-node:
-    image: aztecprotocol/aztec:0.85.0-alpha-testnet.5
-    command:
-      - node
-      - --no-warnings
-      - /usr/src/yarn-project/aztec/dest/bin/index.js
-      - start
-      - --prover-node
-      - --archiver
-      - --network
-      - alpha-testnet
-    depends_on:
-      - prover-broker
-    environment:
-#      ETHEREUM_HOSTS: "https://eth-sepolia.g.alchemy.com/v2/"
-#      L1_CONSENSUS_HOST_URL: "https://lb.drpc.org/ogrpc?network=sepolia&dkey="
-      ETHEREUM_HOSTS: "https://ethereum-sepolia-rpc.publicnode.com"
-      L1_CONSENSUS_HOST_URL: "https://ethereum-sepolia-beacon-api.publicnode.com"
-      PROVER_BROKER_HOST: http://prover-broker:8080
-      PROVER_PUBLISHER_PRIVATE_KEY: "0x"
-      DATA_DIRECTORY: /data/prover
-      LOG_LEVEL: info
-    volumes:
-      - ~/aztec-data/prover:/data/prover
-
-  # Prover Broker
-  prover-broker:
-    image: aztecprotocol/aztec:0.85.0-alpha-testnet.5
-    command:
-      - node
-      - --no-warnings
-      - /usr/src/yarn-project/aztec/dest/bin/index.js
-      - start
-      - --prover-broker
-      - --network
-      - alpha-testnet
-    environment:
-#      ETHEREUM_HOSTS: "https://eth-sepolia.g.alchemy.com/v2/"
-      ETHEREUM_HOSTS: "https://ethereum-sepolia-rpc.publicnode.com"
-      DATA_DIRECTORY: /data/broker
-      LOG_LEVEL: info
-    volumes:
-      - ~/aztec-data/broker:/data/broker
-
-  # Prover Agent
-  prover-agent:
-    image: aztecprotocol/aztec:0.85.0-alpha-testnet.5
-    command:
-      - node
-      - --no-warnings
-      - /usr/src/yarn-project/aztec/dest/bin/index.js
-      - start
-      - --prover-agent
-      - --network
-      - alpha-testnet
-    environment:
-      PROVER_BROKER_HOST: http://prover-broker:8080
-      PROVER_ID: "0x"
-      PROVER_AGENT_COUNT: "1"
-      LOG_LEVEL: info
 
 15. Запустить ноды
 docker-compose up -d
