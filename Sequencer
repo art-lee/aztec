@@ -71,10 +71,12 @@ export PATH=$PATH:/root/.aztec/bin
 8. Refresh bash profile
 source /root/.bash_profile
 
-9. Update for testnet (or)
+9. Update for testnet (cli)
 aztec-up alpha-testnet
 aztec-up 0.87.7
+(docer compose)
 docker compose pull
+docker-compose up -d --force-recreate
 
 10. Check AZTEC version
 aztec --version
