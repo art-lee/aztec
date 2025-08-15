@@ -80,6 +80,8 @@ docker-compose up -d --force-recreate
 
 10. Check AZTEC version
 aztec --version
+docker exec aztec_sequencer node /usr/src/yarn-project/aztec/dest/bin/index.js --version
+
 
 11. Create sequencer prover and broker directory
 mkdir -p ~/aztec-data/{sequencer,prover,broker}
